@@ -22,11 +22,9 @@
         .dropdown-menu.show { opacity: 1; visibility: visible; }
         nav div li a.menu { font-weight: bold; color: lightgrey; }
         .nav-links-wrapper { display: flex; flex-direction: row-reverse; list-style-type: none; margin: 0; padding: 0; }
-        .grid { display: flex; grid-template-columns: repeat(auto-fill, minmax(none, 1fr)); gap: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .card { width: auto; text-align: center; border: none; padding: 0; border-radius: 5px; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer }
-        .card a { display: flex; flex-direction: column; padding: 10px 20px; background-color: #333; color: white; text-decoration: none; transition: 0.3s; border-radius: 5px; font-weight: bold; }
-        .card a:hover { box-shadow: 0 4px 8px black; background-color: #111; transition: 0.3s; transform: translateY(-5px); }
-        .gridb { display: flex; gap: 15px; align-items: center; justify-content: center; text-decoration: none; }
+        .grid .card { display: flex; flex-direction: column; padding: 10px 20px; background-color: #333; color: white; text-decoration: none; transition: 0.3s; border-radius: 5px; font-weight: bold; }
+        .grid .card:hover { box-shadow: 0 4px 8px black; background-color: #111; transition: 0.3s; transform: translateY(-5px); }
+        .grid { display: flex; gap: 15px; align-items: center; justify-content: center; text-decoration: none; }
         </style>
 </head>
 <body>
@@ -47,22 +45,10 @@
 <h1 class="title">Menu</h1>
 <section class="cards">
   <div class="grid">
-    <div class="card">
-      <a href="menu/games.html">
-        <h2>Games</h2>
-      </a>
-    </div>
-    <div class="card">
-      <a href="menu/other.html">
-        <h2>Other</h2>
-      </a>
-    </div>
-  </div>
-  <div class="gridb">
-    <a href="menu/games.html">
+    <a class="card" href="menu/games.html">
       <h2>Games</h2>
     </a>
-    <a href="menu/other.html">
+    <a class="card" href="menu/other.html">
       <h2>Other</h2>
     </a>
   </div>
