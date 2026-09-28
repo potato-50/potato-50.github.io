@@ -1,0 +1,777 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111714">
+  <meta name="description" content="Live leaderboard for the SIS Game Jam Term 3 2026.">
+  <title>Game Jam | Live Leaderboard</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --page: #111714;
+      --panel: #19211d;
+      --panel-raised: #202a24;
+      --line: #344139;
+      --ink: #f4f5ed;
+      --muted: #a0aaa0;
+      --quiet: #77837a;
+      --lime: #d8ff4f;
+      --lime-dark: #a5cb2e;
+      --coral: #ff8264;
+      --ice: #91d8d0;
+      --gold: #ffd476;
+      --danger: #ff927c;
+      --radius: 12px;
+      --max-width: 1120px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-width: 320px; background: var(--page); }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--page);
+      background-image:
+        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
+        linear-gradient(135deg, #111714 0%, #17201a 52%, #111714 100%);
+      background-size: 36px 36px, 36px 36px, auto;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button, a { font: inherit; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--lime); outline-offset: 4px; }
+
+    .page-shell {
+      width: min(var(--max-width), calc(100% - 64px));
+      margin: 0 auto;
+      padding: 35px 0 56px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding-bottom: 27px;
+      border-bottom: 1px solid rgba(221, 235, 220, .13);
+    }
+
+    .brand { display: flex; align-items: center; gap: 13px; min-width: 0; }
+
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      place-items: center;
+      border: 1px solid rgba(216,255,79,.48);
+      border-radius: 11px;
+      color: var(--lime);
+      background: rgba(216,255,79,.07);
+      font-family: Impact, "Arial Narrow", sans-serif;
+      font-size: 18px;
+      letter-spacing: 1px;
+      transform: rotate(-4deg);
+    }
+
+    .brand-name {
+      margin: 0;
+      color: var(--muted);
+      font-family: Impact, "Arial Narrow", sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+    }
+
+    .brand-event { margin: 4px 0 0; font-size: 12px; color: var(--quiet); }
+
+    .actions { display: flex; align-items: center; gap: 10px; }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      margin-right: 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.15px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 0 4px rgba(255,212,118,.11);
+    }
+
+    .status[data-state="live"] .status-dot {
+      background: var(--lime);
+      box-shadow: 0 0 0 4px rgba(216,255,79,.12);
+    }
+
+    .status[data-state="preview"] .status-dot,
+    .status[data-state="offline"] .status-dot {
+      background: var(--danger);
+      box-shadow: 0 0 0 4px rgba(255,130,100,.12);
+    }
+
+    .button {
+      display: inline-flex;
+      min-height: 40px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--ink);
+      background: rgba(255,255,255,.025);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+      cursor: pointer;
+    }
+
+    .button:hover { border-color: #68796c; background: rgba(255,255,255,.07); transform: translateY(-1px); }
+    .button-primary { border-color: var(--lime); color: #18200f; background: var(--lime); }
+    .button-primary:hover { border-color: #e4ff85; background: #e4ff85; }
+    .button:disabled { cursor: wait; opacity: .8; transform: none; }
+    .button-glyph { font-size: 16px; line-height: 1; }
+
+    .hero {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 44px 0 30px;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 13px;
+      color: var(--lime);
+      font-family: Impact, "Arial Narrow", sans-serif;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before { width: 23px; height: 2px; background: var(--coral); content: ""; }
+
+    h1 {
+      margin: 0;
+      font-family: Impact, "Arial Narrow", "Trebuchet MS", sans-serif;
+      font-size: clamp(48px, 7vw, 76px);
+      font-weight: 400;
+      line-height: .95;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+
+    .hero-copy { margin: 13px 0 0; color: var(--muted); font-size: 14px; line-height: 1.5; }
+
+    .updated {
+      margin: 0 0 5px;
+      color: var(--quiet);
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .notice {
+      display: none;
+      margin: -8px 0 22px;
+      padding: 11px 13px;
+      border-left: 2px solid var(--coral);
+      color: #f2c2b5;
+      background: rgba(255,130,100,.07);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .notice.is-visible { display: block; }
+
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-family: Impact, "Arial Narrow", sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .section-note { margin: 0; color: var(--quiet); font-size: 11px; }
+
+    .podium {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      align-items: end;
+      gap: 14px;
+    }
+
+    .podium-place {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: end;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .podium-place.place-1 { grid-column: 3 / span 2; grid-row: 1; }
+    .podium-place.place-2 { grid-column: 1 / span 2; grid-row: 1; }
+    .podium-place.place-3 { grid-column: 5 / span 2; grid-row: 1; }
+    .podium.has-first-tie .podium-place.place-1 { grid-column: 2 / span 4; }
+    .podium.has-first-tie .podium-place.place-3 { grid-column: 3 / span 2; grid-row: 2; }
+    .podium.has-second-tie .podium-place.place-1 { grid-column: 3 / span 2; }
+    .podium.has-second-tie .podium-place.place-2 { grid-column: 2 / span 4; grid-row: 2; }
+    .podium.has-third-tie .podium-place.place-3 { grid-column: 2 / span 4; grid-row: 2; }
+
+    .podium-card {
+      position: relative;
+      display: flex;
+      grid-column: 1 / -1;
+      min-width: 0;
+      min-height: 206px;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, rgba(39,51,43,.98), rgba(24,32,27,.98));
+      box-shadow: 0 16px 34px rgba(0,0,0,.14);
+      animation: arrive .5s both;
+      transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .podium-card:hover { transform: translateY(-4px); border-color: #657464; box-shadow: 0 21px 38px rgba(0,0,0,.24); }
+    .podium-card.place-1 { min-height: 244px; border-color: rgba(216,255,79,.62); background: linear-gradient(145deg, #293521, #1b251c 74%); }
+    .podium-card.place-1::after { position: absolute; right: -28px; bottom: -41px; width: 148px; height: 148px; border: 1px solid rgba(216,255,79,.14); border-radius: 50%; content: ""; pointer-events: none; }
+    .podium-card.place-2 .medal { color: #d3ded2; }
+    .podium-card.place-3 .medal { color: var(--coral); }
+    .podium-place.is-tied .podium-card { grid-column: auto; }
+    .podium-tie-label { display: flex; grid-column: 1 / -1; align-items: center; gap: 12px; margin: 0 0 2px; color: var(--gold); font-family: Impact, "Arial Narrow", sans-serif; font-size: 12px; text-align: center; text-transform: uppercase; }
+    .podium-tie-label::before, .podium-tie-label::after { height: 1px; flex: 1 1 auto; background: rgba(255,212,118,.36); content: ""; }
+
+    .podium-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .medal { color: var(--gold); font-family: Impact, "Arial Narrow", sans-serif; font-size: 12px; letter-spacing: .9px; text-transform: uppercase; }
+    .medal-symbol { margin-right: 7px; font-size: 15px; }
+    .podium-index { color: rgba(244,245,237,.35); font-family: Impact, "Arial Narrow", sans-serif; font-size: 14px; letter-spacing: .8px; }
+    .game-name { overflow-wrap: anywhere; }
+    .podium-name { position: relative; z-index: 1; margin: 18px 0 14px; font-size: 19px; font-weight: 700; line-height: 1.23; }
+    .place-1 .podium-name { max-width: 420px; font-size: 27px; }
+    .podium-score { display: flex; align-items: baseline; gap: 8px; }
+    .podium-score strong { font-family: Impact, "Arial Narrow", sans-serif; font-size: 42px; font-weight: 400; line-height: .95; }
+    .place-1 .podium-score strong { color: var(--lime); font-size: 53px; }
+    .podium-score span { color: var(--muted); font-size: 11px; }
+
+    .board-section { margin-top: 40px; }
+    .board-list { display: grid; gap: 9px; }
+
+    .board-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 92px;
+      align-items: center;
+      gap: 16px;
+      min-height: 74px;
+      padding: 12px 16px;
+      border: 1px solid rgba(221,235,220,.11);
+      border-radius: 9px;
+      background: rgba(25,33,29,.78);
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+
+    .board-row:hover, .board-row:focus-within { border-color: rgba(216,255,79,.42); background: #1b251e; transform: translateX(3px); }
+    .rank { color: var(--muted); font-family: Impact, "Arial Narrow", sans-serif; font-size: 19px; text-align: center; }
+    .row-content { min-width: 0; }
+    .row-name { margin: 0 0 9px; font-size: 14px; font-weight: 700; line-height: 1.3; }
+    .bar-track { height: 4px; overflow: hidden; border-radius: 99px; background: #303a33; }
+    .bar-fill { display: block; width: var(--bar-width); height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--lime-dark), var(--lime)); transform-origin: left; animation: grow .65s both; }
+    .board-row:nth-child(3n + 2) .bar-fill { background: linear-gradient(90deg, #d16f58, var(--coral)); }
+    .board-row:nth-child(3n) .bar-fill { background: linear-gradient(90deg, #5b9e97, var(--ice)); }
+    .row-score {
+      justify-self: end;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity .16s ease;
+      white-space: nowrap;
+    }
+    .board-row:hover .row-score, .board-row:focus-within .row-score { opacity: 1; }
+    .board-row:focus-within .row-score { opacity: 1; }
+
+    .empty-state, .loading-state {
+      display: grid;
+      min-height: 220px;
+      place-items: center;
+      padding: 32px;
+      border: 1px dashed #47554a;
+      border-radius: var(--radius);
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .loading-state { gap: 12px; }
+    .loader { width: 24px; height: 24px; border: 2px solid #465344; border-top-color: var(--lime); border-radius: 50%; animation: spin .8s linear infinite; }
+    .footer { display: flex; justify-content: space-between; gap: 18px; margin-top: 38px; padding-top: 15px; border-top: 1px solid rgba(221,235,220,.1); color: var(--quiet); font-size: 10px; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes grow { from { transform: scaleX(.04); } to { transform: scaleX(1); } }
+    @keyframes arrive { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 700px) {
+      .page-shell { width: min(100% - 36px, var(--max-width)); padding-top: 20px; }
+      .topbar { align-items: flex-start; gap: 14px; padding-bottom: 20px; }
+      .actions { gap: 7px; }
+      .status { min-height: 34px; margin-right: 1px; font-size: 10px; }
+      .button { min-height: 36px; gap: 6px; padding: 0 10px; font-size: 11px; }
+      .button-refresh .button-label { display: none; }
+      .hero { align-items: flex-start; padding: 35px 0 26px; }
+      .updated { align-self: end; margin-bottom: 4px; font-size: 10px; }
+      .podium { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+      .podium-place { gap: 9px; }
+      .podium-card { min-height: 188px; padding: 17px; }
+      .podium-card.place-1 { min-height: 210px; }
+      .podium-place.place-1 { grid-column: 1 / -1; grid-row: 1; }
+      .podium-place.place-2 { grid-column: 1; grid-row: 2; }
+      .podium-place.place-3 { grid-column: 2; grid-row: 2; }
+      .podium.has-first-tie .podium-place.place-1 { grid-column: 1 / -1; grid-row: 1; }
+      .podium.has-first-tie .podium-place.place-3 { grid-column: 1 / -1; grid-row: 2; }
+      .podium.has-second-tie .podium-place.place-1 { grid-column: 1 / -1; grid-row: 1; }
+      .podium.has-second-tie .podium-place.place-2 { grid-column: 1 / -1; grid-row: 2; }
+      .podium.has-third-tie .podium-place.place-3 { grid-column: 1 / -1; grid-row: 3; }
+      .podium-name { font-size: 17px; }
+      .place-1 .podium-name { font-size: 25px; }
+      .board-section { margin-top: 32px; }
+    }
+
+    @media (max-width: 430px) {
+      .page-shell { width: calc(100% - 28px); }
+      .brand { gap: 9px; }
+      .brand-mark { width: 36px; height: 36px; flex-basis: 36px; font-size: 16px; }
+      .brand-name { font-size: 11px; }
+      .brand-event { max-width: 130px; font-size: 10px; }
+      .actions { gap: 5px; }
+      .status { gap: 6px; font-size: 9px; letter-spacing: .7px; }
+      .button-open { width: 37px; padding: 0; font-size: 0; }
+      .button-open .button-glyph { font-size: 15px; }
+      .hero { display: block; }
+      h1 { font-size: 54px; }
+      .updated { margin-top: 17px; }
+      .section-note { font-size: 10px; }
+      .podium { gap: 9px; }
+      .podium-place { gap: 9px; }
+      .podium-card { min-height: 177px; padding: 14px; }
+      .podium-card.place-1 { min-height: 198px; }
+      .medal { font-size: 10px; }
+      .medal-symbol { margin-right: 4px; }
+      .podium-name { font-size: 15px; }
+      .place-1 .podium-name { font-size: 23px; }
+      .podium-score strong { font-size: 35px; }
+      .place-1 .podium-score strong { font-size: 47px; }
+      .board-row { grid-template-columns: 30px minmax(0, 1fr) 64px; gap: 10px; min-height: 70px; padding: 11px 10px; }
+      .row-name { font-size: 13px; }
+      .row-score { font-size: 11px; }
+      .footer { flex-direction: column; gap: 6px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="SIS Game Jam">
+        <div class="brand-mark" aria-hidden="true">GJ</div>
+        <div>
+          <p class="brand-name">SIS Game Jam</p>
+          <p class="brand-event">Term 3 · 2026</p>
+        </div>
+      </div>
+      <div class="actions">
+        <span class="status" id="status" data-state="loading" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="status-label">CONNECTING</span>
+        </span>
+        <button class="button button-primary button-refresh" id="refresh-button" type="button" aria-label="Refresh leaderboard" title="Refresh scores">
+          <span class="button-glyph" aria-hidden="true">↻</span><span class="button-label">Refresh</span>
+        </button>
+        <a class="button button-open" href="https://docs.google.com/spreadsheets/d/e/2PACX-1vQxW52ZAqdGyeQY5WqSW8p0aQ0ukizfvJnMpk5WDw8ySVU-4JtJmQlyX05zVdycTplNFosF_mfgRS6c/pubhtml" target="_blank" rel="noopener noreferrer" aria-label="Open the published score sheet in a new tab" title="Open score sheet">
+          Open Sheet <span class="button-glyph" aria-hidden="true">↗</span>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">The final scores are in</p>
+          <h1 id="page-title">Leaderboard</h1>
+          <p class="hero-copy">Big ideas. Tiny teams. One top spot.</p>
+        </div>
+        <p class="updated" id="updated-time">Connecting to live scores…</p>
+      </section>
+
+      <div class="notice" id="data-notice" role="status"></div>
+
+      <section aria-labelledby="podium-title">
+        <div class="section-heading">
+          <h2 id="podium-title">The podium</h2>
+          <p class="section-note">The games setting the pace</p>
+        </div>
+        <div class="podium" id="podium" aria-live="polite">
+          <div class="loading-state" style="grid-column: 1 / -1">
+            <span class="loader" aria-hidden="true"></span>
+            <span>Checking the live score sheet…</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="board-section" aria-labelledby="board-title">
+        <div class="section-heading">
+          <h2 id="board-title">The rest of the field</h2>
+          <p class="section-note" id="field-count"></p>
+        </div>
+        <div class="board-list" id="leaderboard">
+          <div class="loading-state"><span>Standings will appear here shortly.</span></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Scores refresh automatically every 10 seconds.</span>
+      <span>Made for the SIS Game Jam</span>
+    </footer>
+  </div>
+
+  <script>
+    "use strict";
+
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxW52ZAqdGyeQY5WqSW8p0aQ0ukizfvJnMpk5WDw8ySVU-4JtJmQlyX05zVdycTplNFosF_mfgRS6c/pub?gid=724638887&single=true&output=csv";
+    const PUBLISHED_SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQxW52ZAqdGyeQY5WqSW8p0aQ0ukizfvJnMpk5WDw8ySVU-4JtJmQlyX05zVdycTplNFosF_mfgRS6c/pubhtml";
+    const STORAGE_KEY = "sis-game-jam-leaderboard-v1";
+
+    const podiumElement = document.getElementById("podium");
+    const leaderboardElement = document.getElementById("leaderboard");
+    const statusElement = document.getElementById("status");
+    const statusLabel = document.getElementById("status-label");
+    const updatedElement = document.getElementById("updated-time");
+    const noticeElement = document.getElementById("data-notice");
+    const fieldCountElement = document.getElementById("field-count");
+    const refreshButton = document.getElementById("refresh-button");
+    let displayedGames = [];
+    let isRefreshing = false;
+
+    function parseCsv(text) {
+      const rows = [];
+      let row = [];
+      let field = "";
+      let quoted = false;
+
+      for (let index = 0; index < text.length; index += 1) {
+        const character = text[index];
+        if (quoted) {
+          if (character === '"' && text[index + 1] === '"') {
+            field += '"';
+            index += 1;
+          } else if (character === '"') {
+            quoted = false;
+          } else {
+            field += character;
+          }
+        } else if (character === '"' && field.length === 0) {
+          quoted = true;
+        } else if (character === ',') {
+          row.push(field);
+          field = "";
+        } else if (character === '\n' || character === '\r') {
+          if (character === '\r' && text[index + 1] === '\n') index += 1;
+          row.push(field);
+          rows.push(row);
+          row = [];
+          field = "";
+        } else {
+          field += character;
+        }
+      }
+      if (field.length || row.length) {
+        row.push(field);
+        rows.push(row);
+      }
+      return rows;
+    }
+
+    function parseSheetData(responseText) {
+      const rows = parseCsv(responseText);
+      const scoreLabelRow = rows.findIndex((row) => row.some((cell) => cell.trim().toLowerCase() === "total score:"));
+      if (scoreLabelRow < 1 || scoreLabelRow + 1 >= rows.length) return [];
+      const nameCells = rows[scoreLabelRow - 1];
+      const scoreCells = rows[scoreLabelRow + 1];
+      const pairs = [];
+      const firstColumn = 3;
+      const columnCount = Math.max(nameCells.length, scoreCells.length);
+
+      for (let column = firstColumn; column < columnCount; column += 1) {
+        const name = String(nameCells[column] || "").trim();
+        const rawScore = String(scoreCells[column] || "").trim();
+        if (!name || !rawScore) continue;
+        const score = Number(rawScore);
+        if (!Number.isFinite(score)) continue;
+        pairs.push({ name, score, sourceOrder: column - firstColumn });
+      }
+      return pairs;
+    }
+
+    function sortGames(games) {
+      return games.slice().sort((first, second) => second.score - first.score || first.sourceOrder - second.sourceOrder);
+    }
+
+    function processGames(games) {
+      const sortedGames = sortGames(games);
+      const scoreCounts = new Map();
+      sortedGames.forEach((game) => scoreCounts.set(game.score, (scoreCounts.get(game.score) || 0) + 1));
+      let previousScore;
+      let currentRank = 0;
+      return sortedGames.map((game, index) => {
+        if (index === 0 || game.score !== previousScore) currentRank = index + 1;
+        previousScore = game.score;
+        return { ...game, rank: currentRank, tied: scoreCounts.get(game.score) > 1 };
+      });
+    }
+
+    async function fetchSheetData() {
+      if (window.location.protocol === "file:") {
+        throw new Error("Live scores require this page to be hosted on an HTTP or HTTPS website.");
+      }
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 9000);
+      try {
+        const requestUrl = new URL(SHEET_URL);
+        requestUrl.searchParams.set("_", String(Date.now()));
+        const response = await fetch(requestUrl, { cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error(`Sheet request failed (${response.status})`);
+        const games = parseSheetData(await response.text());
+        if (!games.length) throw new Error("No valid game scores were found in the published sheet");
+        return games;
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    }
+
+    function ordinal(rank) {
+      const tens = rank % 100;
+      if (tens >= 11 && tens <= 13) return `${rank}TH`;
+      switch (rank % 10) {
+        case 1: return `${rank}ST`;
+        case 2: return `${rank}ND`;
+        case 3: return `${rank}RD`;
+        default: return `${rank}TH`;
+      }
+    }
+
+    function rankLabel(game) {
+      return ordinal(game.rank);
+    }
+
+    function makeElement(tagName, className, text) {
+      const element = document.createElement(tagName);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    function renderPodium(games) {
+      podiumElement.replaceChildren();
+      const topGames = games.filter((game) => game.rank <= 3);
+      const rankCounts = new Map();
+      topGames.forEach((game) => rankCounts.set(game.rank, (rankCounts.get(game.rank) || 0) + 1));
+      podiumElement.classList.toggle("has-first-tie", rankCounts.get(1) > 1);
+      podiumElement.classList.toggle("has-second-tie", rankCounts.get(2) > 1);
+      podiumElement.classList.toggle("has-third-tie", rankCounts.get(3) > 1);
+      if (!topGames.length) {
+        const empty = makeElement("div", "empty-state", "Live standings could not be loaded.");
+        empty.style.gridColumn = "1 / -1";
+        podiumElement.append(empty);
+        return;
+      }
+
+      const symbols = ["★", "◆", "●"];
+      for (let place = 1; place <= 3; place += 1) {
+        const placeGames = topGames.filter((game) => game.rank === place);
+        if (!placeGames.length) continue;
+        const placeElement = makeElement("div", `podium-place place-${place}${placeGames.length > 1 ? " is-tied" : ""}`);
+        placeElement.style.gridTemplateColumns = `repeat(${placeGames.length}, minmax(0, 1fr))`;
+        if (placeGames.length > 1) {
+          placeElement.append(makeElement("p", "podium-tie-label", `Tied for ${ordinal(place).toLowerCase()} place`));
+        }
+
+        placeGames.forEach((game) => {
+          const card = makeElement("article", `podium-card place-${place}`);
+          const top = makeElement("div", "podium-top");
+          const medal = makeElement("span", "medal");
+          const symbol = makeElement("span", "medal-symbol", symbols[place - 1]);
+          symbol.setAttribute("aria-hidden", "true");
+          medal.append(symbol, document.createTextNode(rankLabel(game)));
+          top.append(medal, makeElement("span", "podium-index", `0${place}`));
+
+          const name = makeElement("h3", "podium-name game-name", game.name);
+          const score = makeElement("div", "podium-score");
+          const scoreNumber = makeElement("strong", "", formatScore(game.score));
+          const points = makeElement("span", "", "points");
+          score.append(scoreNumber, points);
+          card.append(top, name, score);
+          placeElement.append(card);
+        });
+
+        podiumElement.append(placeElement);
+      }
+    }
+
+    function barWidthFor(score, games) {
+      const high = games[0].score;
+      const low = games[games.length - 1].score;
+      if (high > 0) return Math.max(0, Math.min(100, (score / high) * 100));
+      if (high === low) return 100;
+      return 16 + ((score - low) / (high - low)) * 84;
+    }
+
+    function renderLeaderboard(games) {
+      leaderboardElement.replaceChildren();
+      const others = games.filter((game) => game.rank > 3);
+      fieldCountElement.textContent = others.length ? `${others.length} ${others.length === 1 ? "game" : "games"}` : "";
+      if (!others.length) {
+        leaderboardElement.append(makeElement("div", "empty-state", games.length ? "That’s everyone on the podium." : "No live scores are available."));
+        return;
+      }
+
+      others.forEach((game) => {
+        const row = makeElement("article", "board-row");
+        row.append(makeElement("span", "rank", `${game.rank}${game.tied ? "=" : ""}`));
+        const content = makeElement("div", "row-content");
+        content.append(makeElement("h3", "row-name game-name", game.name));
+        const track = makeElement("div", "bar-track");
+        track.setAttribute("aria-hidden", "true");
+        const fill = makeElement("span", "bar-fill");
+        const width = barWidthFor(game.score, games);
+        fill.style.setProperty("--bar-width", `${width}%`);
+        track.append(fill);
+        content.append(track);
+        const exactScore = makeElement("span", "row-score", `${formatScore(game.score)} pts`);
+        exactScore.setAttribute("aria-label", `${formatScore(game.score)} points`);
+        row.setAttribute("tabindex", "0");
+        row.setAttribute("title", `${game.name}: ${formatScore(game.score)} points`);
+        row.append(content, exactScore);
+        leaderboardElement.append(row);
+      });
+    }
+
+    function formatScore(score) {
+      return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(score);
+    }
+
+    function renderGames(games) {
+      displayedGames = processGames(games);
+      renderPodium(displayedGames);
+      renderLeaderboard(displayedGames);
+    }
+
+    function updateStatus(state, message) {
+      statusElement.dataset.state = state;
+      statusLabel.textContent = state === "live" ? "LIVE" : state === "preview" ? "PREVIEW" : state === "offline" ? "OFFLINE" : "CONNECTING";
+      noticeElement.textContent = message || "";
+      noticeElement.classList.toggle("is-visible", Boolean(message));
+    }
+
+    function setUpdatedTime(date) {
+      const time = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(date);
+      updatedElement.textContent = `Updated ${time}`;
+    }
+
+    function saveLastGoodData(games) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ savedAt: new Date().toISOString(), games }));
+      } catch (error) {
+        // Storage may be unavailable for local files; the current session still works.
+      }
+    }
+
+    function loadLastGoodData() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+        if (saved && Array.isArray(saved.games)) {
+          return { games: saved.games, savedAt: saved.savedAt ? new Date(saved.savedAt) : null };
+        }
+      } catch (error) {
+        // Ignore malformed or unavailable browser storage.
+      }
+      return null;
+    }
+
+    async function refreshDashboard() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+      refreshButton.disabled = true;
+      refreshButton.classList.add("is-loading");
+      try {
+        const games = await fetchSheetData();
+        renderGames(games);
+        saveLastGoodData(games);
+        updateStatus("live", "");
+        setUpdatedTime(new Date());
+      } catch (error) {
+        if (!displayedGames.length) {
+          const saved = loadLastGoodData();
+          if (saved) {
+            renderGames(saved.games);
+            setUpdatedTime(saved.savedAt || new Date());
+            updateStatus("preview", "Live data unavailable — showing the last saved scores.");
+          } else {
+            renderGames([]);
+            updatedElement.textContent = "Live scores unavailable";
+            const message = window.location.protocol === "file:"
+              ? "This file is opened directly. Upload it to an HTTPS website to load live scores."
+              : "Live data unavailable — check your connection or the published sheet.";
+            updateStatus("offline", message);
+          }
+        } else {
+          updateStatus("preview", "Live data unavailable — keeping the last loaded scores.");
+        }
+      } finally {
+        isRefreshing = false;
+        refreshButton.disabled = false;
+        refreshButton.classList.remove("is-loading");
+      }
+    }
+
+    refreshButton.addEventListener("click", refreshDashboard);
+    refreshDashboard();
+    window.setInterval(refreshDashboard, 10000);
+  </script>
+</body>
+</html>
